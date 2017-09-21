@@ -1,4 +1,5 @@
 <?php
+
 namespace EnderLab;
 
 use Firebase\JWT\JWT;
@@ -30,6 +31,7 @@ class JwtAuthentication implements MiddlewareInterface
 
     /**
      * JwtAuthentication constructor.
+     *
      * @param array $options
      */
     public function __construct(array $options = [])
@@ -39,7 +41,8 @@ class JwtAuthentication implements MiddlewareInterface
 
     /**
      * @param ServerRequestInterface $request
-     * @param DelegateInterface $delegate
+     * @param DelegateInterface      $delegate
+     *
      * @return ResponseInterface
      */
     public function process(ServerRequestInterface $request, DelegateInterface $delegate): ResponseInterface
@@ -60,7 +63,7 @@ class JwtAuthentication implements MiddlewareInterface
     private function setOptions(array $options): void
     {
         foreach ($options as $key => $option) {
-            if (in_array($key, $this->defaultOptions)) {
+            if (in_array($key, $this->defaultOptions, true)) {
                 $this->options[$key] = $option;
             }
         }
@@ -68,6 +71,7 @@ class JwtAuthentication implements MiddlewareInterface
 
     /**
      * @param string $token
+     *
      * @return bool|object
      */
     private function checkToken(string $token)
@@ -75,17 +79,19 @@ class JwtAuthentication implements MiddlewareInterface
         try {
             return JWT::decode(
                 $token,
-                $this->options["privateKey"],
-                (array) $this->options["algorithm"]
+                $this->options['privateKey'],
+                (array) $this->options['algorithm']
             );
         } catch (\Exception $exception) {
             $this->error = $exception->getMessage();
+
             return false;
         }
     }
 
     /**
      * @param string $header
+     *
      * @return null|string
      */
     private function getHeaderToken(string $header): ?string

@@ -1,4 +1,5 @@
 <?php
+
 namespace EnderLab;
 
 use Interop\Http\ServerMiddleware\DelegateInterface;
@@ -26,26 +27,27 @@ class DigestAuthentication implements MiddlewareInterface
     /**
      * DigestAuthentication constructor.
      *
-     * @param array $users
+     * @param array       $users
      * @param string|null $nonce
      * @param string|null $realm
      */
     public function __construct(array $users, string $nonce = null, string $realm = null)
     {
         $this->users = $users;
-        $this->nonce = ( null === $nonce ) ? uniqid() : $nonce;
-        $this->realm = ( null === $realm ) ? $this->realm : $realm;
+        $this->nonce = (null === $nonce) ? uniqid() : $nonce;
+        $this->realm = (null === $realm) ? $this->realm : $realm;
     }
 
     /**
      * @param ServerRequestInterface $request
-     * @param DelegateInterface $delegate
+     * @param DelegateInterface      $delegate
+     *
      * @return ResponseInterface
      */
     public function process(ServerRequestInterface $request, DelegateInterface $delegate): ResponseInterface
     {
         $dataRequest = $this->parseDigestHttp($request->getServerParams()['PHP_AUTH_DIGEST']);
-        $isAuthRequest = ( count($dataRequest) == 0 ) ? false : true;
+        $isAuthRequest = (0 === count($dataRequest)) ? false : true;
         $isAuthRequest = (
             $this->buildValidResponse($dataRequest, $request->getMethod()) && true === $isAuthRequest ?
             true :
@@ -55,9 +57,9 @@ class DigestAuthentication implements MiddlewareInterface
         if (false === $isAuthRequest) {
             return (new Response())->withStatus(401)->withHeader(
                 'WWW-Authenticate',
-                'Basic realm="'.$this->realm.'"'.
-                ',qop="auth",nonce="'.$this->nonce.'"'.
-                ',opaque="'.md5($this->realm).'"'
+                'Basic realm="' . $this->realm . '"' .
+                ',qop="auth",nonce="' . $this->nonce . '"' .
+                ',opaque="' . md5($this->realm) . '"'
             );
         }
 
@@ -66,17 +68,18 @@ class DigestAuthentication implements MiddlewareInterface
 
     /**
      * @param string $txt
+     *
      * @return array
      */
     private function parseDigestHttp(string $txt): array
     {
         $parts = [
-            'nonce' => 1,
-            'nc' => 1,
-            'cnonce' => 1,
-            'qop' => 1,
+            'nonce'    => 1,
+            'nc'       => 1,
+            'cnonce'   => 1,
+            'qop'      => 1,
             'username' => 1,
-            'uri' => 1,
+            'uri'      => 1,
             'response' => 1
         ];
         $return = [];
@@ -93,15 +96,16 @@ class DigestAuthentication implements MiddlewareInterface
     }
 
     /**
-     * @param array $result
+     * @param array  $result
      * @param string $method
+     *
      * @return bool
      */
     private function buildValidResponse(array $result, string $method): bool
     {
-        $a1 = md5($result['username'].':'.$this->realm.':'.$this->users[$result['username']]);
-        $a2 = md5($method.':'.$result['uri']);
+        $a1 = md5($result['username'] . ':' . $this->realm . ':' . $this->users[$result['username']]);
+        $a2 = md5($method . ':' . $result['uri']);
 
-        return md5($a1.':'.$result['nonce'].':'.$result['nc'].':'.$result['cnonce'].':'.$result['qop'].':'.$a2);
+        return md5($a1 . ':' . $result['nonce'] . ':' . $result['nc'] . ':' . $result['cnonce'] . ':' . $result['qop'] . ':' . $a2);
     }
 }

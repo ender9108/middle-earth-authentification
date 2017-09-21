@@ -1,4 +1,5 @@
 <?php
+
 namespace EnderLab;
 
 use GuzzleHttp\Psr7\Response;
@@ -18,6 +19,7 @@ class BasicAuthentication implements MiddlewareInterface
 
     /**
      * BasicAuthentication constructor.
+     *
      * @param array $users
      */
     public function __construct(array $users = [])
@@ -28,12 +30,12 @@ class BasicAuthentication implements MiddlewareInterface
     public function process(ServerRequestInterface $request, DelegateInterface $delegate): ResponseInterface
     {
         $isAuthRequest = $request->hasHeader('Authorization');
-        $isAuthRequest = (true == $isAuthRequest && isset($request->getServerParams()['PHP_AUTH_USER']) ? true : false);
+        $isAuthRequest = (true === $isAuthRequest && isset($request->getServerParams()['PHP_AUTH_USER']) ? true : false);
 
-        if (false == $isAuthRequest) {
+        if (false === $isAuthRequest) {
             return (new Response())->withStatus(401)->withHeader(
                 'WWW-Authenticate',
-                'Basic realm="'.$this->realm.'"'
+                'Basic realm="' . $this->realm . '"'
             );
         }
 
@@ -43,11 +45,12 @@ class BasicAuthentication implements MiddlewareInterface
     /**
      * @param string $username
      * @param string $password
+     *
      * @return bool
      */
     public function isValidUser(string $username, string $password): bool
     {
-        if( isset($this->users[$username]) && $this->users[$username] == $password ) {
+        if (isset($this->users[$username]) && $this->users[$username] === $password) {
             return true;
         }
 

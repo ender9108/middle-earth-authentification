@@ -8,6 +8,11 @@
             "email": "alexandreberthelot9108@gmail.com"
         }
     ],
+    "autoload": {
+        "psr-4": {
+            "EnderLab\\": "src/"
+        }
+    },
     "require": {
         "psr/http-message": "^1.0",
         "http-interop/http-middleware": "0.4.1",
