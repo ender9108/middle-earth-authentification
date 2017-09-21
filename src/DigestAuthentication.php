@@ -23,6 +23,13 @@ class DigestAuthentication implements MiddlewareInterface
      */
     private $realm = 'digest authentication';
 
+    /**
+     * DigestAuthentication constructor.
+     *
+     * @param array $users
+     * @param string|null $nonce
+     * @param string|null $realm
+     */
     public function __construct(array $users, string $nonce = null, string $realm = null)
     {
         $this->users = $users;
@@ -30,6 +37,11 @@ class DigestAuthentication implements MiddlewareInterface
         $this->realm = ( null === $realm ) ? $this->realm : $realm;
     }
 
+    /**
+     * @param ServerRequestInterface $request
+     * @param DelegateInterface $delegate
+     * @return ResponseInterface
+     */
     public function process(ServerRequestInterface $request, DelegateInterface $delegate): ResponseInterface
     {
         $dataRequest = $this->parseDigestHttp($request->getServerParams()['PHP_AUTH_DIGEST']);
