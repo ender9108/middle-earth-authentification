@@ -31,6 +31,13 @@ class BasicAuthentication implements MiddlewareInterface
     {
         $isAuthRequest = $request->hasHeader('Authorization');
         $isAuthRequest = (true === $isAuthRequest && isset($request->getServerParams()['PHP_AUTH_USER']) ? true : false);
+        $isAuthRequest = (
+            true === $isAuthRequest &&
+            true === $this->isValidUser(
+                $request->getServerParams()['PHP_AUTH_USER'],
+                $request->getServerParams()['PHP_AUTH_PW']
+            ) ? true : false
+        );
 
         if (false === $isAuthRequest) {
             return (new Response())->withStatus(401)->withHeader(

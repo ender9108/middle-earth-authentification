@@ -3,6 +3,7 @@
 namespace Tests\EnderLab;
 
 use EnderLab\JwtAuthentication;
+use GuzzleHttp\Psr7\ServerRequest;
 use PHPUnit\Framework\TestCase;
 
 class JwtAuthenticationTest extends TestCase
@@ -14,5 +15,11 @@ class JwtAuthenticationTest extends TestCase
             'algorithm'  => 'HS512'
         ]);
         $this->assertInstanceOf(JwtAuthentication::class, $middleware);
+    }
+
+    public function testBasicAuth()
+    {
+        $request = new ServerRequest('GET', '/');
+        $params = $request->getServerParams();
     }
 }
