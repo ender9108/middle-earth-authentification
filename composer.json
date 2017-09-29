@@ -25,6 +25,7 @@
         "friendsofphp/php-cs-fixer": "^2.6",
         "satooshi/php-coveralls": "^1.0",
         "ext-xdebug": "2.5.5",
-        "monolog/monolog": "^1.23"
+        "monolog/monolog": "^1.23",
+        "enderlab/psr15-middle-earth-framework": "^1.0"
     }
 }
