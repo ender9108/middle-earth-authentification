@@ -27,10 +27,14 @@ class BasicAuthentication implements MiddlewareInterface
         $this->users = $users;
     }
 
+    /**
+     * @param ServerRequestInterface $request
+     * @param DelegateInterface $delegate
+     * @return ResponseInterface
+     */
     public function process(ServerRequestInterface $request, DelegateInterface $delegate): ResponseInterface
     {
-        $isAuthRequest = $request->hasHeader('Authorization');
-        $isAuthRequest = (true === $isAuthRequest && isset($request->getServerParams()['PHP_AUTH_USER']) ? true : false);
+        $isAuthRequest = (isset($request->getServerParams()['PHP_AUTH_USER']) ? true : false);
         $isAuthRequest = (
             true === $isAuthRequest &&
             true === $this->isValidUser(
