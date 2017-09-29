@@ -29,7 +29,8 @@ class BasicAuthentication implements MiddlewareInterface
 
     /**
      * @param ServerRequestInterface $request
-     * @param DelegateInterface $delegate
+     * @param DelegateInterface      $delegate
+     *
      * @return ResponseInterface
      */
     public function process(ServerRequestInterface $request, DelegateInterface $delegate): ResponseInterface
