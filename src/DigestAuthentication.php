@@ -2,6 +2,7 @@
 
 namespace EnderLab;
 
+use GuzzleHttp\Psr7\Response;
 use Interop\Http\ServerMiddleware\DelegateInterface;
 use Interop\Http\ServerMiddleware\MiddlewareInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -49,13 +50,14 @@ class DigestAuthentication implements MiddlewareInterface
         $dataRequest = $this->parseDigestHttp($request->getServerParams()['PHP_AUTH_DIGEST']);
         $isAuthRequest = (0 === count($dataRequest)) ? false : true;
         $isAuthRequest = (
-            $this->buildValidResponse($dataRequest, $request->getMethod()) && true === $isAuthRequest ?
-            true :
-            false
+            $this->buildValidResponse($dataRequest, $request->getMethod()) &&
+            true === $isAuthRequest ?
+            true : false
         );
 
         if (false === $isAuthRequest) {
-            return (new Response())->withStatus(401)->withHeader(
+            return (new Response()
+            )->withStatus(401)->withHeader(
                 'WWW-Authenticate',
                 'Basic realm="' . $this->realm . '"' .
                 ',qop="auth",nonce="' . $this->nonce . '"' .
