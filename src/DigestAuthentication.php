@@ -3,10 +3,10 @@
 namespace EnderLab;
 
 use GuzzleHttp\Psr7\Response;
-use Interop\Http\ServerMiddleware\DelegateInterface;
-use Interop\Http\ServerMiddleware\MiddlewareInterface;
+use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
 class DigestAuthentication implements MiddlewareInterface
 {
@@ -41,11 +41,11 @@ class DigestAuthentication implements MiddlewareInterface
 
     /**
      * @param ServerRequestInterface $request
-     * @param DelegateInterface      $delegate
+     * @param RequestHandlerInterface $requestHandler
      *
      * @return ResponseInterface
      */
-    public function process(ServerRequestInterface $request, DelegateInterface $delegate): ResponseInterface
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $requestHandler): ResponseInterface
     {
         $dataRequest = $this->parseDigestHttp($request->getServerParams()['PHP_AUTH_DIGEST']);
         $isAuthRequest = (0 === count($dataRequest)) ? false : true;
@@ -65,7 +65,7 @@ class DigestAuthentication implements MiddlewareInterface
             );
         }
 
-        return $delegate->process($request);
+        return $requestHandler->process($request);
     }
 
     /**
