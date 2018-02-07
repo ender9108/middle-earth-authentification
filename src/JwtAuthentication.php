@@ -50,6 +50,8 @@ class JwtAuthentication implements MiddlewareInterface
             'cookieName'    => 'jwt_token',
             'callback'      => null,
             'attribute'     => '_token',
+            'algorithm'     => self::ALGORITHM_HS256,
+            'secret'        => 'jwtroxx!',
             'rules'         => [
                 'jti' => null,
                 'iss' => null,
@@ -80,11 +82,7 @@ class JwtAuthentication implements MiddlewareInterface
         $token = $this->getHeaderToken($request->getHeaderLine($this->options['header']));
 
         if (true === $this->options['cookie']) {
-            $cookies = $request->getCookieParams();
-
-            if (isset($cookies[$this->options['cookieName']])) {
-                $token = $cookies[$this->options['cookieName']];
-            }
+            $token = $this->getCookieToken($request->getCookieParams());
         }
 
         $parsedToken = $this->checkToken($token);
@@ -116,6 +114,7 @@ class JwtAuthentication implements MiddlewareInterface
      * @param string $token
      *
      * @return bool|Token
+     * @throws \Exception
      */
     private function checkToken(string $token)
     {
@@ -147,7 +146,17 @@ class JwtAuthentication implements MiddlewareInterface
                 }
             }
 
-            return (true === $token->validate($validator) ? $token : false);
+            $token = (true === $token->validate($validator) ? $token : false);
+
+            if (false !== $token) {
+                $signerArgs = $this->getSigner();
+
+                if (false === $token->verify($signerArgs[0], $signerArgs[1])) {
+                    return false;
+                }
+            }
+
+            return $token;
         } catch (\Exception $exception) {
             $this->error = $exception->getMessage();
             return false;
@@ -168,5 +177,48 @@ class JwtAuthentication implements MiddlewareInterface
         }
 
         return $token;
+    }
+
+    /**
+     * @param array $cookies
+     * @return null|string
+     */
+    private function getCookieToken(array $cookies): ?string
+    {
+        $token = null;
+
+        if (isset($cookies[$this->options['cookieName']])) {
+            $token = $cookies[$this->options['cookieName']];
+        }
+
+        return $token;
+    }
+
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    private function getSigner(): array
+    {
+        $signer = 'Sha'.substr($this->options['algorithm'], -1, 3);
+
+        switch ($this->options['algorithm']) {
+            case self::ALGORITHM_HS256:
+            case self::ALGORITHM_HS384:
+            case self::ALGORITHM_HS512:
+                return [new $signer, $this->options['secret']];
+                break;
+            case self::ALGORITHM_ES256:
+            case self::ALGORITHM_ES384:
+            case self::ALGORITHM_ES512:
+            case self::ALGORITHM_RS256:
+            case self::ALGORITHM_RS384:
+            case self::ALGORITHM_RS512:
+                return [new $signer, new Key($this->options['secret'])];
+                break;
+            default:
+                throw new \Exception(sprintf('Algorithm %s is not supported', $this->options['algorithm']));
+                break;
+        }
     }
 }
