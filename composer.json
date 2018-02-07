@@ -18,7 +18,8 @@
         "psr/http-message": "^1.0",
         "psr/http-server-middleware": "^1.0",
         "guzzlehttp/psr7": "^1.4",
-        "firebase/php-jwt": "^5.0"
+        "firebase/php-jwt": "^5.0",
+        "lcobucci/jwt": "^3.2"
     },
     "require-dev": {
         "phpunit/phpunit": "^6.5",
@@ -26,6 +27,6 @@
         "friendsofphp/php-cs-fixer": "^2.9",
         "satooshi/php-coveralls": "^2.0",
         "monolog/monolog": "^1.23",
-        "composer/composer": "^1.6"
+        "enderlab/middle-earth-framework": "dev-master"
     }
 }

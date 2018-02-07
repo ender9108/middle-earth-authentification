@@ -9,10 +9,7 @@ class JwtAuthenticationTest extends TestCase
 {
     public function testInstance()
     {
-        $middleware = new JwtAuthentication([
-            'privateKey' => 'test',
-            'algorithm'  => 'HS512'
-        ]);
+        $middleware = new JwtAuthentication();
         $this->assertInstanceOf(JwtAuthentication::class, $middleware);
     }
 }

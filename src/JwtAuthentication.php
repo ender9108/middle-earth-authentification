@@ -4,6 +4,9 @@ namespace EnderLab;
 
 use Firebase\JWT\JWT;
 use GuzzleHttp\Psr7\Response;
+use Lcobucci\JWT\Parser;
+use Lcobucci\JWT\Token;
+use Lcobucci\JWT\ValidationData;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -11,13 +14,15 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 class JwtAuthentication implements MiddlewareInterface
 {
-    /**
-     * @var array
-     */
-    private $defaultOptions = [
-        'privateKey',
-        'algorithm'
-    ];
+    const ALGORITHM_HS256 = 'HS256';
+    const ALGORITHM_HS384 = 'HS384';
+    const ALGORITHM_HS512 = 'HS512';
+    const ALGORITHM_RS256 = 'RS256';
+    const ALGORITHM_RS384 = 'RS384';
+    const ALGORITHM_RS512 = 'RS512';
+    const ALGORITHM_ES256 = 'ES256';
+    const ALGORITHM_ES384 = 'ES384';
+    const ALGORITHM_ES512 = 'ES512';
 
     /**
      * @var array
@@ -36,6 +41,26 @@ class JwtAuthentication implements MiddlewareInterface
      */
     public function __construct(array $options = [])
     {
+        $currentTime = time();
+        $this->options = [
+            'secure'        => true,
+            'header'        => 'Authorization',
+            'regexp'        => "/Bearer\s+(.*)$/i",
+            'cookie'        => true,
+            'cookieName'    => 'jwt_token',
+            'callback'      => null,
+            'attribute'     => '_token',
+            'rules'         => [
+                'jti' => null,
+                'iss' => null,
+                'aud' => null,
+                'sub' => null,
+                'iat' => $currentTime,
+                'nbf' => $currentTime,
+                'exp' => $currentTime
+            ]
+        ];
+
         $this->setOptions($options);
     }
 
@@ -44,17 +69,35 @@ class JwtAuthentication implements MiddlewareInterface
      * @param RequestHandlerInterface $requestHandler
      *
      * @return ResponseInterface
+     * @throws \Exception
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $requestHandler): ResponseInterface
     {
-        $token = $this->getHeaderToken($request->getHeaderLine('Authorization'));
+        if (true === $this->options['secure'] && 'https' != $request->getUri()->getScheme()) {
+            throw new \Exception('You must use https !');
+        }
+
+        $token = $this->getHeaderToken($request->getHeaderLine($this->options['header']));
+
+        if (true === $this->options['cookie']) {
+            $cookies = $request->getCookieParams();
+
+            if (isset($cookies[$this->options['cookieName']])) {
+                $token = $cookies[$this->options['cookieName']];
+            }
+        }
+
         $parsedToken = $this->checkToken($token);
 
         if (false === $parsedToken) {
             return (new Response())->withStatus(401)->getBody()->write($this->error);
         }
 
-        return $requestHandler->process($request);
+        if ($this->options["attribute"]) {
+            $request = $request->withAttribute($this->options["attribute"], $parsedToken);
+        }
+
+        return $requestHandler->handle($request);
     }
 
     /**
@@ -63,7 +106,7 @@ class JwtAuthentication implements MiddlewareInterface
     private function setOptions(array $options): void
     {
         foreach ($options as $key => $option) {
-            if (in_array($key, $this->defaultOptions, true)) {
+            if (in_array($key, $this->options, true)) {
                 $this->options[$key] = $option;
             }
         }
@@ -72,19 +115,41 @@ class JwtAuthentication implements MiddlewareInterface
     /**
      * @param string $token
      *
-     * @return bool|object
+     * @return bool|Token
      */
     private function checkToken(string $token)
     {
         try {
-            return JWT::decode(
-                $token,
-                $this->options['privateKey'],
-                (array) $this->options['algorithm']
-            );
+            $token = (new Parser())->parse($token);
+            $validator = new ValidationData();
+
+            if (isset($this->options['rules']) && count($this->options['rules']) > 0) {
+                foreach ($this->options['rules'] as $key => $value) {
+                    switch ($key) {
+                        case 'jti':
+                            $validator->setId($value);
+                            break;
+                        case 'iss':
+                            $validator->setIssuer($value);
+                            break;
+                        case 'aud':
+                            $validator->setAudience($value);
+                            break;
+                        case 'sub':
+                            $validator->setSubject($value);
+                            break;
+                        case 'iat':
+                        case 'nbf':
+                        case 'exp':
+                            $validator->setCurrentTime($value);
+                            break;
+                    }
+                }
+            }
+
+            return (true === $token->validate($validator) ? $token : false);
         } catch (\Exception $exception) {
             $this->error = $exception->getMessage();
-
             return false;
         }
     }
@@ -98,8 +163,8 @@ class JwtAuthentication implements MiddlewareInterface
     {
         $token = null;
 
-        if (preg_match("/Bearer\s+(.*)$/i", $header, $matches)) {
-            return $matches[1];
+        if (preg_match($this->options['regexp'], $header, $matches)) {
+            $token = $matches[1];
         }
 
         return $token;

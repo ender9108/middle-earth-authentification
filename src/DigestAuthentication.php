@@ -65,7 +65,7 @@ class DigestAuthentication implements MiddlewareInterface
             );
         }
 
-        return $requestHandler->process($request);
+        return $requestHandler->handle($request);
     }
 
     /**
